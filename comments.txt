@@ -1,0 +1,18 @@
+See: https://people.eecs.berkeley.edu/~demmel/cs267/lecture25/lecture25.html for reference
+
+Files:
+
+utils.py:
+--------------------
+- 1d operators, assumes 0 boundary condition
+- see code for more details
+
+functions:
+- restrict: restriction operator
+- inerpolate: interpolation operator
+- smooth: smoothin operator, weighted jacobian
+
+test.py
+--------------------
+- script for some testing and plotting
+
