@@ -1,9 +1,10 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # See:
 # https://people.eecs.berkeley.edu/~demmel/cs267/lecture25/lecture25.html
 
-def restrict(t, x, sparse=False):
+def restrict(x, sparse=False):
     """Applies the restriction operator to vector x and grid points t. 
 
     Parameters
@@ -24,7 +25,7 @@ def restrict(t, x, sparse=False):
     nr = int((n-1)/2)
     R = np.zeros((nr, n))
     R[:,0] = 0.25
-    R[:,1] = 0.50
+    R[:,1] = 0.5
     R[:,2] = 0.25
 
     # Roll rows of R
@@ -34,12 +35,11 @@ def restrict(t, x, sparse=False):
     column_indices = column_indices - r[:, np.newaxis]
     R = R[rows, column_indices]
     x_restricted =  np.matmul(R, x)
-    t_restricted = t[np.arange(1, x.shape[0]-1, 2)]
 
-    return (t_restricted, x_restricted)
+    return x_restricted
 
     
-def interpolate(t, x, sparse=False):
+def interpolate(x, sparse=False):
     """Applies the interpolation operator to vector x
 
     Parameters
@@ -58,7 +58,6 @@ def interpolate(t, x, sparse=False):
     """
     # Pad with zeros
     x_padded = np.concatenate(([0], x, [0]))
-    t_padded = np.concatenate(([0], t, [2*t[-1]-t[-2]] ))
     ni = 2*x.shape[0]+1
     I = np.zeros((ni, x_padded.shape[0]))
     I[::2,0:2] = [0.5, 0.5]
@@ -73,7 +72,7 @@ def interpolate(t, x, sparse=False):
     for k in range(r.shape[0]):
         I[k,:] = np.roll(I[k,:], int(r[k]))
 
-    return (np.matmul(I, t_padded), np.matmul(I, x_padded))
+    return np.matmul(I, x_padded)
 
 
 
@@ -94,7 +93,7 @@ def system_matrix_1d(i, sparse=False):
         A += np.diag(np.repeat(-1, 2**i-2), 1) + np.diag(np.repeat(-1, 2**i-2), -1)
         return A*(4**(i))
 
-def smooth(x, A, b, sparse=False):
+def smooth(x, A, b, n_iter, sparse=False):
     """Applies the weighted Jacobi in 1d on the approximate 
     solution x for Ax=b.
 
@@ -113,15 +112,57 @@ def smooth(x, A, b, sparse=False):
         column vector of the smoothed solution
     """
     if not sparse:
-        w = 2.0/3.0
-        D = np.diag(np.diag(A)) 
-        D_inv = np.diag(1/np.diag(A))
-        L_U = A - D
-        w = 2.0/3.0
-        x1 = w*np.matmul(D_inv, b - np.matmul(L_U, x)) + (1-w)*x
+        for i in range(n_iter):
+            w = 2.0/3.0
+            D = np.diag(np.diag(A)) 
+            D_inv = np.diag(1/np.diag(A))
+            L_U = A - D
+            x1 = w*np.matmul(D_inv, b - np.matmul(L_U, x)) + (1-w)*x
         return x1
     else:
         raise NotImplementedError()
+
+def v_cycle(x, b, i):
+    """Applies the multigrid V-cycle algorithm.
+    """
+    A = system_matrix_1d(i)
+    if i == 1:
+        x = np.linalg.solve(A, b)
+    else:
+        x = smooth(x, A, b, n_iter=2)
+        r = b - np.dot(A, x)
+        r = restrict(r)
+        v = np.zeros_like(r)
+        v = v_cycle(v, r, i-1)
+        x = x + interpolate(v)
+        x = smooth(x, A, b, n_iter=2)
+    return x
+
+def full_multigrid(f, n):
+    """Applies the full multigrid algorithm.
+    """
+    h = 1 / 2
+    t = np.arange(h, 1, h)
+    b = f(t)
+    A = system_matrix_1d(1)
+    v = np.linalg.solve(A, b)
+    plt.figure()
+    plt.plot(np.concatenate(([0], t, [1])), np.concatenate(([0], v, [0])), label=f'{1}')
+    for i in range(2, n+1):
+        n = 2**i - 1
+        h = 1 / (n + 1)
+        t = np.arange(h, 1, h)
+        b = f(t)
+        v = interpolate(v)
+        v = v_cycle(v, b, i)
+        plt.plot(np.concatenate(([0], t, [1])), np.concatenate(([0], v, [0])), label=f'{i}')
+    plt.legend()
+    return v
+
+
+        
+
+  
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -130,10 +171,11 @@ if __name__ == '__main__':
     t = np.linspace(0.0, 1.0, 2**i+1)[1:-1]
     x = -4*t**2 + 4*t
 
-    xr1 = restriction_operator_1d(x)
-    tr1 = t[restriction_indices_1d(x)]
+    xr1 = restrict(x)
+    h = 1 / (len(xr1) + 1)
+    tr1 = np.arange(h, 1, h)
 
-    xr0 = interpolation_operator_1d(xr1)
+    xr0 = interpolate(xr1)
 
 
     plt.figure()
@@ -141,3 +183,4 @@ if __name__ == '__main__':
     plt.plot(tr1, xr1)
     plt.plot(t, xr0, 'rx')
     plt.show()
+
