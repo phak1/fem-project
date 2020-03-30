@@ -84,6 +84,9 @@ if __name__ == '__main__':
     def f(x):
         return 8*np.ones_like(x)
 
+    def sol_fun(t):
+        return -4*t**2+4*t
+
     # Uniform grid test
     p = np.linspace(0.0, 1.0, 5)
     e = np.array([[0, 1], [1, 2], [2, 3], [3, 4]])
@@ -98,14 +101,33 @@ if __name__ == '__main__':
 
     # Non uniform grid test
     p1 = np.linspace(0.0, 0.5, 3)
-    p2 = np.linspace(0.5, 1.0, 5)
+    p2 = np.linspace(0.5, 1.0, 40)
     p = np.concatenate((p1, p2[1:]))
-    e = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]])
+    n = np.arange(p.shape[0])
+    n1 = n[0:n.shape[0]-1]
+    n2 = n[1:]
+    e = np.transpose(np.vstack((n1, n2)))
+    # e = np.array([[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]])
 
     A, b = assembly_1d(f, p, e)
-    print('Non uniform test:')
-    print('============================')
-    print('System matrix A:')
-    print(A)
-    print('Load vector b:')
-    print(b)
+    # print('Non uniform test:')
+    # print('============================')
+    # print('System matrix A:')
+    # print(A)
+    # print('Load vector b:')
+    # print(b)
+
+    N = A.shape[0]
+    A = A[1:(N-1), 1:(N-1)]
+    b = b[1:(N-1)]
+
+    u = np.linalg.solve(A, b)
+    u = np.concatenate(([0.0], u, [0.0]))
+
+    g = np.linspace(0.0, 1.0, 1000)
+    u_real = sol_fun(g)
+
+    plt.figure()
+    plt.plot(g, u_real)
+    plt.plot(p, u)
+    plt.show()
