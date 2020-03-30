@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def assembly_1d(f, x, e):
+def assembly_1d(f, p, e):
     """FEM assembly in 1d
 
     Parameters
@@ -42,9 +42,7 @@ def assembly_1d(f, x, e):
     dphi_t[1,:] = dphi2(t)
 
     # System matrix and load vecor
-    print(N)
     b = np.zeros(N)
-    print(b)
     A = np.zeros((N, N))
 
     for i in range(k):
@@ -76,8 +74,10 @@ def assembly_1d(f, x, e):
                 # print(e[i, p])
                 A[e[i, p], e[i, q]] = A[e[i, p], e[i, q]] + Ae[p, q]
 
-    return (A, b)
-     
+    return A, b
+
+def assembly_2d(f, p, e):
+    raise NotImplementedError()   
 
 if __name__ == '__main__':
     # Load function

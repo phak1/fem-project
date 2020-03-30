@@ -93,7 +93,7 @@ def system_matrix_1d(i, sparse=False):
         A += np.diag(np.repeat(-1, 2**i-2), 1) + np.diag(np.repeat(-1, 2**i-2), -1)
         return A*(4**(i))
 
-def smooth(x, A, b, n_iter, sparse=False):
+def smooth(x, A, b, n_iter=1, sparse=False):
     """Applies the weighted Jacobi in 1d on the approximate 
     solution x for Ax=b.
 
@@ -121,48 +121,6 @@ def smooth(x, A, b, n_iter, sparse=False):
         return x1
     else:
         raise NotImplementedError()
-
-def v_cycle(x, b, i):
-    """Applies the multigrid V-cycle algorithm.
-    """
-    A = system_matrix_1d(i)
-    if i == 1:
-        x = np.linalg.solve(A, b)
-    else:
-        x = smooth(x, A, b, n_iter=2)
-        r = b - np.dot(A, x)
-        r = restrict(r)
-        v = np.zeros_like(r)
-        v = v_cycle(v, r, i-1)
-        x = x + interpolate(v)
-        x = smooth(x, A, b, n_iter=2)
-    return x
-
-def full_multigrid(f, n):
-    """Applies the full multigrid algorithm.
-    """
-    h = 1 / 2
-    t = np.arange(h, 1, h)
-    b = f(t)
-    A = system_matrix_1d(1)
-    v = np.linalg.solve(A, b)
-    plt.figure()
-    plt.plot(np.concatenate(([0], t, [1])), np.concatenate(([0], v, [0])), label=f'{1}')
-    for i in range(2, n+1):
-        n = 2**i - 1
-        h = 1 / (n + 1)
-        t = np.arange(h, 1, h)
-        b = f(t)
-        v = interpolate(v)
-        v = v_cycle(v, b, i)
-        plt.plot(np.concatenate(([0], t, [1])), np.concatenate(([0], v, [0])), label=f'{i}')
-    plt.legend()
-    return v
-
-
-        
-
-  
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
