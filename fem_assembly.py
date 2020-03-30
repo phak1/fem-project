@@ -68,7 +68,7 @@ def assembly_1d(f, x, e):
         for p in range(2):
             for q in range(2):
                 for k in range(len(t)):
-                    Ae[p, q] = Ae[p, q] + (1/h)*dphi_t[p, k]*(1/h)*dphi_t[q, k]*w[k]
+                    Ae[p, q] = Ae[p, q] + (1/h)*dphi_t[p, k]*(1/h)*dphi_t[q, k]*h*w[k]
 
         # Move to A
         for p in range(2):
