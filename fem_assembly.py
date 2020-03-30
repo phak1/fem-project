@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def assembly_1d(f, p, e):
+def assembly_1d(f, x, e):
     """FEM assembly in 1d
 
     Parameters
