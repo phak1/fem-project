@@ -76,8 +76,39 @@ def assembly_1d(f, x, e):
 
     return A, b
 
-def assembly_2d(f, p, e):
-    raise NotImplementedError()   
+def assembly_2d(f, x, e):
+    """FEM assembly in 2d. Based on the example implementation
+    on the course.
+
+    Parameters
+    ----------
+    f : load function
+
+    p : numpy.array
+        grid points as array of shape (n, 2), where n is number of points
+    e : numpy.ndarray
+        elements as array of shape (k, 3), where k is number of elements
+    """
+    N = x.shape[0]
+    k = e.shape[0]
+
+    # Basis functions on the reference element
+    phi_1 = lambda x: 1 - x[0] - x[1]
+    phi_2 = lambda x: x[0]
+    phi_3 = lambda x: x[1]
+
+    # Derivatives of basis functions
+    dphi_1 = lambda x: -np.ones_like(x)
+    dphi_2 = lambda x: np.array([[1], [0]])
+    dphi_3 = lambda x: np.array([[0], [1]])
+
+    # Quadrature weights and positions for reference
+    w = (1/6)*np.ones(3)
+    t = np.array([[0.5, 0], [0.5, 0.5], [0, 0.5]]).T
+
+    raise NotImplementedError
+    
+
 
 if __name__ == '__main__':
     # Load function
