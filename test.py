@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     plt.title('Test of interpolation operator')
     plt.savefig('interpolate.png')
-
+    """
     # ###############################
     # # Test solution operator
     # ###############################
@@ -78,19 +78,24 @@ if __name__ == '__main__':
     uk = np.zeros((N, u.shape[0]))
     uk[0,:] = x0
 
-    plt.figure()
+    # plt.figure()
     # plt.plot(t, u)
-    plt.plot(t, uk[0,:]-u)
+    # plt.plot(t, uk[0,:]-u)
 
     for k in range(1, N):
         uk[k,:] = utils.smooth(uk[k-1,:], A, b)
-        if k == 1:
-            plt.plot(t, uk[k,:]-u)
-        if k == 2:
-            plt.plot(t, uk[k,:]-u)
+        # if k == 1:
+        #     plt.plot(t, uk[k,:]-u)
+        # if k == 2:
+        #     plt.plot(t, uk[k,:]-u)
 
-    plt.title('Error (red) smooth after small number of iterations (blue)')
-    plt.savefig('smooth.png')
+    plt.figure()
+    plt.plot(t, uk[0,:])
+    plt.plot(t, u)
+    plt.show()
+
+    # plt.title('Error (red) smooth after small number of iterations (blue)')
+    # plt.savefig('smooth.png')
     """
 
     # ###############################
@@ -133,4 +138,5 @@ if __name__ == '__main__':
     plt.plot(t, u)
     plt.plot(t, x)
     plt.show()
+    """
 
