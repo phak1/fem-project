@@ -14,28 +14,39 @@ class TriangularMesh:
     nodes: numpy.array, shape (n_nodes, 2)
         Nodes in triangulation
     elements: numpy.array, shape (n_elements, 3)
-        Elements in triangulation
+        Elements in triangulation. axis 1 contains indices
+        of the element nodes in `nodes`
 
     Attributes
     ----------
     edges: numpy.array, shape (n_edges, 2)
-        Unique edges in the triangulation
+        Unique edges in the triangulation. Axis 1 contains indices
+        of the edge nodes in `nodes`
+    elem_to_edges: numpy.array, shape (n_elements, 3)
+        Matrix mapping elements to their edges
+    boundary_edges: numpy.array, shape (n_boundary_edges, 2)
+        Boundary edges in triangulation
     """
     def __init__(self, nodes, elements):
         self.nodes = nodes
         self.elements = np.sort(elements, axis=1)
         self.n_nodes = nodes.shape[0]
         self.n_elements = elements.shape[0]
-        self.edges, self.elem_to_edges = self.__get_edges(self.nodes, self.elements)
 
-    def __get_edges(self, nodes, elements):
-        """Returns the (unique) edges of given triangulation and map from the triangulation
-        elements to the edges"""
         e_ref = np.array([[0,1], [1,2], [0,2]])
-        edges = np.concatenate([elements[:, e_ref[i,:]] for i in range(e_ref.shape[0])])
-        edges_unique, indices = np.unique(edges, axis=0, return_inverse=True)
-        elem_to_edges = indices.reshape((3, self.n_elements)).T
-        return edges_unique, elem_to_edges
+        edges = np.concatenate([self.elements[:, e_ref[i,:]] for i in range(e_ref.shape[0])])
+        edges_unique, indices, counts = np.unique(edges, axis=0, return_inverse=True, return_counts=True)
+        self.edges = edges_unique
+        self.elem_to_edges = indices.reshape((3, self.n_elements)).T
+        self.boundary_edges = edges_unique[counts==1]
+
+        # Find boundary and internal nodes
+        node_idx = range(self.n_nodes)
+        self.boundary_node_idx = np.unique(self.boundary_edges.ravel())
+        self.interior_node_idx = np.setdiff1d(node_idx, self.boundary_node_idx)
+        self.boundary_nodes = self.nodes[self.boundary_node_idx]
+        self.internal_nodes = self.nodes[self.interior_node_idx]
+
 
     def visualize(self): 
         visualize_mesh(self)
@@ -123,13 +134,12 @@ def visualize_mesh(mesh):
     
 
 if __name__ == "__main__":
-    p = np.array([[0,0], [1,0], [0.5,1]])
-    t = np.array([[0, 1, 2]])
-    mesh = TriangularMesh(p, t)
-    refined_mesh(refined_mesh(mesh)).visualize()
-    start = time.time()
-    uniform_mesh(5)
-    end = time.time()
-    print(end-start)
-    #print(t)
-    #print(np.sort(t, axis=1))
+    
+    # Calculate refined mesh
+    mesh = uniform_mesh(2)
+    print(mesh.nodes)
+    print(mesh.boundary_edges)
+    print(mesh.boundary_nodes)
+    print(mesh.internal_nodes)
+    # Visualize mesh
+    visualize_mesh(mesh)
